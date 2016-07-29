@@ -100,7 +100,7 @@ Standard scoring:
 Head Coaches not used in Standard game
 '''
 
-class Team(object):
+class Team(objec):
 
     def __init__(self,):
         self._players = []

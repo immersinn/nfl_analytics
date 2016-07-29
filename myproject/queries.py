@@ -1,6 +1,6 @@
 
 import warnings
-import sqlite3
+##import sqlite3
 
 import numpy
 import pandas
@@ -26,23 +26,40 @@ def pandasDFFromQuery(rows, cols, err_spec):
     return(df)
 
 
-def fetchPlayerGamesYear(pid, year, cursor):
+def fetchPlayerSeasons(pid, cursor):
     
-    rows = cursor.execute('''SELECT gptt.gid, gptt.pid, gptt.team,
-                                    game_ids.year, game_ids.date, game_ids.home, game_ids.away
+    rows = cursor.execute('''SELECT DISTINCT game_ids.season
                              FROM gptt INNER JOIN game_ids
                              ON gptt.gid = game_ids.gid
-                             WHERE gptt.pid = %s AND game_ids.year = %s''' % \
-                          (pid, year)).fetchall()
+                             WHERE gptt.pid = %s''' % \
+                         (pid)).fetchall()
     rows = list(set(rows))
     cols = [c[0] for c in cursor.description]
     
     # Process query results
-    err_spec = "player id %s in year %s" % (pid, year)
+    err_spec = "player id has no data associated"
     return(pandasDFFromQuery(rows, cols, err_spec))
 
 
-def fetchPlayerEntriesYear(pid, year, cursor):
+def fetchPlayerGamesSeason(pid, season, cursor):
+    
+    rows = cursor.execute('''SELECT gptt.gid, gptt.pid, gptt.team,
+                                    game_ids.season, game_ids.date, game_ids.home, game_ids.away
+                             FROM gptt INNER JOIN game_ids
+                             ON gptt.gid = game_ids.gid
+                             WHERE gptt.pid = %s AND game_ids.season = "%s"''' % \
+                          (pid, season)).fetchall()
+    rows = list(set(rows))
+    cols = [c[0] for c in cursor.description]
+    
+    # Process query results
+    err_spec = "player id %s in season %s" % (pid, season)
+    df = pandasDFFromQuery(rows, cols, err_spec)
+    df['date'] = pandas.to_datetime(df['date'])
+    return(df)
+
+
+def fetchPlayerEntriesSeason(pid, season, cursor):
     ''' Fetch list of games and stat types for which player has entries in 
         a given year.
     '''
@@ -51,12 +68,12 @@ def fetchPlayerEntriesYear(pid, year, cursor):
     rows = cursor.execute('''SELECT gptt.gid, gptt.pid, gptt.team, gptt.ps_table
                              FROM gptt INNER JOIN game_ids
                              ON gptt.gid = game_ids.gid
-                             WHERE gptt.pid = %s AND game_ids.year = %s''' % \
-                          (pid, year)).fetchall()
+                             WHERE gptt.pid = %s AND game_ids.season = "%s"''' % \
+                          (pid, season)).fetchall()
     cols = [c[0] for c in cursor.description]
     
     # Process query results
-    err_spec = "player id %s in year %s" % (pid, year)
+    err_spec = "player id %s in season %s" % (pid, season)
     return(pandasDFFromQuery(rows, cols, err_spec))
 
 
@@ -73,7 +90,7 @@ def fetchPlayerStatsDetails(pid, gids, stat_area, cursor):
                   ", ".join(player_stat_tables) + ")"
         raise ValueError(err_msg)
         
-    # Convert list of gids to singel str of expected format
+    # Convert list of gids to single str of expected format
     gids_str = "(" + \
                ", ".join(["'" + str(gid) + "'" for gid in gids]) + \
                ")"

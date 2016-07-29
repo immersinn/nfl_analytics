@@ -1,0 +1,6 @@
+numpy
+scipy
+pandas
+sqlite3
+
+see here: https://pip.pypa.io/en/stable/user_guide/#requirements-files
