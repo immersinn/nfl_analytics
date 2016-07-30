@@ -31,7 +31,6 @@ Standard scoring:
 · Interceptions Thrown = -2pts
 
 
-
 RUSHING
 Standard scoring: 
 · TD Rush = 6pts
@@ -100,7 +99,8 @@ Standard scoring:
 Head Coaches not used in Standard game
 '''
 
-class Team(objec):
+
+class Team(object):
 
     def __init__(self,):
         self._players = []
@@ -111,11 +111,136 @@ class Team(objec):
         pass
 
 
+def pointsCalculator(player,):
+    if player.position in ['off', 'qb', 'rb', 'wr', 'te', 'k']:
+        return(pointsCalculatorOff(player))
+    elif player.position in ['def', 'd/st']:
+        return(pointsCalculatorDef(player, player.team))
+    else:
+        err_msg = "Invalid position value"
+        raise ValueError(err_msg)
+
+
+def pointsCalculatorOff(player, ):
+    pts = 0       
+    if hasattr(player, "ps_passing"):
+        pts += scorePassing(player.ps_passing)
+    if hasattr(player, "ps_rushing"):
+        pts += scoreRushing(player.ps_rushing)
+    if hasattr(player, "ps_receiving"):
+        pts += scoreReceiving(player.ps_receiving)
+    if hasattr(player, "ps_fumbles"):
+        pts += scoreFumbleLoss(player.ps_fumbles)
+    if hasattr(player, "ps_kicking_adv"):
+        pts += scoreKicking(player.ps_kicking_adv)
+    return(pts)
+    
+
+def pointsCalculatorDef(defense_team, team=True):
+    pts = scoreKickReturn(defense_team.ps_kick_returns) + \
+          scorePuntReturn(defense_team.ps_punt_returns) + \
+          scoreInterceptions(defense_team.ps_interceptions) + \
+          scoreFumblesRec(defense_team.ps_fumbles) + \
+          scoreDefenseGeneral(defense_team.ps_defensive) + \
+          0 # blocks; safety
+    if team:
+          pts += scorePointsAllowed(defense_team.points_allowed)
+    return(pts)
+
 
 def scorePassing(data):
-    pts = data['td'] * 4 + \
-          data['yds'] // 25 + \
-          data['int'] * -2 + \
+    pts = sum(data['td']) * 4 + \
+          sum([y // 25 for y in list(data['yds'])]) + \
+          sum(data['int']) * -2 + \
           0  # data['2pt'] * 2
-
     return(pts)
+
+
+def scoreRushing(data):
+    pts = sum(data['td']) * 6 + \
+          sum([y // 10 for y in list(data['yds'])]) + \
+          0 # data['2pt'] * 2
+    return(pts)
+
+
+def scoreReceiving(data):
+    pts = sum(data['td']) * 6 + \
+          sum([y // 10 for y in list(data['yds'])]) + \
+          0 # data['2pt'] * 2
+    return(pts)
+
+
+def scoreKicking(data):
+    pts = sum(data['xp-made']) + \
+          (sum(data['fg-att']) - sum(data['fg-att'])) * -1 + \
+          (sum(data['xp-att']) - sum(data['xp-att'])) * -1 + \
+          0 # get fg distances an update this
+    return(pts)
+
+
+def scorePunting(data):
+    # Not currently needed
+    return(0)
+
+
+def scoreKickReturn(data):
+    pts = sum(data['td']) * 6
+    return(pts)
+
+
+def scorePuntReturn(data):
+    pts = sum(data['td']) * 6
+    return(pts)
+
+
+def scoreFumbleLoss(data):
+    pts = sum(data['lost']) * -2
+    return(pts)
+
+
+def scoreFumblesRec(data):
+    pts = sum(data['rec']) * 2 + \
+          0 #sum(data['td']) * 6 + \
+    return(pts)
+
+
+def scoreInterceptions(data):
+    pts = sum(data['td']) * 6 + \
+          sum(data['int']) * 2
+    return(pts)
+
+
+def scoreDefenseGeneral(data):
+    '''Scoring for data in the Defense Table only'''
+    pts = sum(data['sacks']) + \
+          0 # should safety, blocks go here?
+    return(pts)
+
+
+def scorePointsAllowed(points):
+    for p in points:
+        if p > 45:
+            pts = -5
+        elif p > 35:
+            pts = -3
+        elif p > 27:
+            pts = -1
+        elif p > 17:
+            pts = 0
+        elif p > 14:
+            pts = 1
+        elif p > 6:
+            pts = 3
+        elif p > 0:
+            pts = 4
+        elif p == 0:
+            pts = 5
+        else:
+            err_msg = "Invalid value for 'points'"
+            raise ValueError(err_msg)
+    return(pts)
+
+          
+          
+
+          

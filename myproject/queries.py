@@ -26,12 +26,11 @@ def pandasDFFromQuery(rows, cols, err_spec):
     return(df)
 
 
-def fetchPlayerSeasons(pid, cursor):
-    
+def fetchPlayerSeasons(pid, cursor):   
     rows = cursor.execute('''SELECT DISTINCT game_ids.season
                              FROM gptt INNER JOIN game_ids
                              ON gptt.gid = game_ids.gid
-                             WHERE gptt.pid = %s''' % \
+                             WHERE gptt.pid = "%s"''' % \
                          (pid)).fetchall()
     rows = list(set(rows))
     cols = [c[0] for c in cursor.description]
@@ -47,7 +46,7 @@ def fetchPlayerGamesSeason(pid, season, cursor):
                                     game_ids.season, game_ids.date, game_ids.home, game_ids.away
                              FROM gptt INNER JOIN game_ids
                              ON gptt.gid = game_ids.gid
-                             WHERE gptt.pid = %s AND game_ids.season = "%s"''' % \
+                             WHERE gptt.pid = "%s" AND game_ids.season = "%s"''' % \
                           (pid, season)).fetchall()
     rows = list(set(rows))
     cols = [c[0] for c in cursor.description]
@@ -68,7 +67,7 @@ def fetchPlayerEntriesSeason(pid, season, cursor):
     rows = cursor.execute('''SELECT gptt.gid, gptt.pid, gptt.team, gptt.ps_table
                              FROM gptt INNER JOIN game_ids
                              ON gptt.gid = game_ids.gid
-                             WHERE gptt.pid = %s AND game_ids.season = "%s"''' % \
+                             WHERE gptt.pid = "%s" AND game_ids.season = "%s"''' % \
                           (pid, season)).fetchall()
     cols = [c[0] for c in cursor.description]
     
@@ -97,7 +96,7 @@ def fetchPlayerStatsDetails(pid, gids, stat_area, cursor):
             
     # Fetch Data
     rows = cursor.execute('''SELECT * FROM %s
-                             WHERE pid = %s AND gid IN  %s''' % \
+                             WHERE pid = "%s" AND gid IN  %s''' % \
                           (stat_area, pid,gids_str)).fetchall()
     cols = [c[0] for c in cursor.description]
     
