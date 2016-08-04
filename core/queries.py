@@ -26,6 +26,23 @@ def pandasDFFromQuery(rows, cols, err_spec):
     return(df)
 
 
+def fetchTeamsLookupData(season, cursor):
+    # Teams Info
+    limit = 0
+    names = []
+    cities = []
+    abrvs = []
+    for row in cursor.execute('''SELECT name, city_name, abrv
+                                 FROM teams
+                                 WHERE year = "%s"''' % str(season)):
+        names.append(row[0])
+        cities.append(row[1])
+        abrvs.append(row[2])
+    abrv_name_lookup = {k:v for (k,v) in zip(abrvs, names)}
+    name_city_lookup = {k:v for (k,v) in zip(names, cities)}
+    return(abrv_name_lookup, name_city_lookup)
+
+
 def fetchPlayerSeasons(pid, cursor):   
     rows = cursor.execute('''SELECT DISTINCT game_ids.season
                              FROM gptt INNER JOIN game_ids
