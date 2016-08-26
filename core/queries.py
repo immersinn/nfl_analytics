@@ -11,7 +11,7 @@ from sports_data_scraping.espn import nfl_stat_lookups
 player_stat_tables = nfl_stat_lookups.player_stat_tables
 
 
-def pandasDFFromQuery(rows, err_spec):
+def pandasDFFromQuery(rows, columns=[]):
     if len(rows) > 0:
         df = pandas.DataFrame(data=rows)
         cols = df.columns
@@ -22,23 +22,24 @@ def pandasDFFromQuery(rows, err_spec):
                 df[col] = df[col].astype('str')
     else:
         df = pandas.DataFrame(data=[])
-        warnings.warn("No data returned for query: %s" % err_spec)
     return(df)
 
 
-def genQuery(query_str, db_path, err_spec):
+def genQuery(query_str, db_path, err_spec, verbose=False):
     with sqlite3.connect(db_path) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         rows = [dict(r) for r in \
                 cursor.execute(query_str).fetchall()]
         columns = [c[0] for c in cursor.description]
-##    df = pandas.DataFrame(rows, columns=columns)
-    df = pandasDFFromQuery(rows, err_spec)
+##    df = ppandasDFFromQuery(rows, columns=columns)
+    df = pandasDFFromQuery(rows)
+    if verbose and df.shape[0]==0:
+        warnings.warn("No data returned for query: %s" % err_spec)
     return(df)
 
 
-def genQuery_dictArgs(query_str, query_args, db_path, err_spec):
+def genQuery_dictArgs(query_str, query_args, db_path, err_spec, verbose=False):
     """
     As the query above, but instead uses a dictionary to specify
     variable arguments to the query
@@ -49,7 +50,9 @@ def genQuery_dictArgs(query_str, query_args, db_path, err_spec):
         rows = [dict(r) for r in \
                 cursor.execute(query_str, query_args).fetchall()]
         columns = [c[0] for c in cursor.description]
-    df = pandasDFFromQuery(rows, err_spec)
+    df = pandasDFFromQuery(rows)
+    if verbose and df.shape[0]==0:
+        warnings.warn("No data returned for query: %s" % err_spec)
     return(df)
         
 
@@ -112,7 +115,11 @@ def fetchPlayerEntriesSeason(pid, season, db_path):
                    WHERE gptt.pid = "%s" AND game_ids.season = "%s"''' % \
                    (pid, season)
     err_spec = "player id %s in season %s" % (pid, season)
-    return(genQuery(query_str, db_path, err_spec))
+    table = genQuery(query_str, db_path, err_spec)
+    if table.shape[0] == 0:
+        table = pandas.DataFrame(data=None,
+                                 columns=['pid', 'gid', 'team', 'ps_table'])
+    return(table)
 
 
 def fetchPlayerStatsDetails(key_value, key_type, gids, stat_area, db_path):
@@ -190,7 +197,9 @@ def fetchPlayersPositionSeason(position, season, db_path):
     For a given position and season, fetch all player IDs,
     """
 
-    query_str = '''SELECT name, pid FROM roster
+    if season == 'NFL - 2015':
+        season = 'NFL - 2016'
+    query_str = '''SELECT name, pid, season FROM roster
                    WHERE pos=:position AND season=:season'''
     query_args = {'position':position, 'season':season}
     err_spec = "no players with position %s in season %s" % (position, season)

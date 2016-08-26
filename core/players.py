@@ -16,8 +16,11 @@ class PlayerSeason(object):
 
 
     def fetchName(self,):
-        self.name = list(self.queries.fetchPlayerName(self.pid,
-                                                      self._DB_PATH).ix[0])[0]
+        try:
+            self.name = list(self.queries.fetchPlayerName(self.pid,
+                                                          self._DB_PATH).ix[0])[0]
+        except IndexError:
+            self.name = 'N/A'
 
 
     def fetchPosition(self,):
@@ -98,10 +101,13 @@ class PlayerSeason(object):
 
 
     def calcPPG(self,):
-        ppg = self.fantasy.pointsPerGameCalculator(player=self)
-        df = ppg.merge(self.games)
-        df = df.sort_values(by='date')
-        self.ppg = df
+        if self.stat_entries.shape[0] > 0:
+            ppg = self.fantasy.pointsPerGameCalculator(player=self)
+            df = ppg.merge(self.games)
+            df = df.sort_values(by='date')
+            self.ppg = df
+        else:
+            self.ppg = pandas.DataFrame()
     
     
 class NFLPlayerSeason(PlayerSeason):
