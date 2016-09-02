@@ -2,6 +2,8 @@
 
 import numpy
 import pandas
+import sklearn
+from sklearn import preprocessing
 
 from nfl_analytics.core import players as nfl_players
 from nfl_analytics.core import fantasy as nfl_fantasy
@@ -75,16 +77,16 @@ def flattenPlayerData(player, window=3):
 
 
 def fetch_preprocess_qb_data_ppg():
-    return(fetchfetchPrepSeasonPosition(position='QB',
-                                        season='NFL - 2015',
-                                        cutoff=7,
-                                        db_path='data/NFLGames'))
+    return(fetchPrepSeasonPosition(position='QB',
+                                   season='NFL - 2015',
+                                   cutoff=7,
+                                   db_path='data/NFLGames'))
 
 
 def fetchPrepSeasonPosition(position, season, cutoff, db_path='data/NFLGames'):
 
     # Load and filter
-    player_df = nfl_queries.fetchPlayersPositionSeason(pos=position,
+    player_df = nfl_queries.fetchPlayersPositionSeason(position=position,
                                                        season=season,
                                                        db_path=db_path)
     players = [nfl_players.NFLPlayerSeason(pid=pid, season=season) \
@@ -144,7 +146,7 @@ def fetch_prep_data_nn(rolling_weeks=3,
     return(flat_data)
 
 
-class NNWindowedDataPrep():
+class NNWindowedDataEncoder():
 
     def __init__(self,):
         pass
@@ -163,3 +165,4 @@ class NNWindowedDataPrep():
     def fit_transform(self, X, y=None):
         self.fit(X)
         return(self.transform(X))
+
